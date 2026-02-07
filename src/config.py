@@ -19,7 +19,7 @@ PAGE_SIZE = 2000
 CRIME_WEIGHTS = {
     "Homicide Offenses": 10,
     "Robbery": 7,
-    "Kidnapping/Abduction": 7,
+    "Kidnapping/Abduction Offenses": 7,
     "Sex Offenses": 6,
     "Assault Offenses": 5,
     "Arson": 5,
@@ -30,8 +30,16 @@ CRIME_WEIGHTS = {
     "Drug/Narcotic Offenses": 2,
     "Fraud Offenses": 2,
     "Stolen Property Offenses": 2,
-    "Destruction/Damage/Vandalism": 1,
+    "Counterfeiting/Forgery": 2,
+    "Destruction/Damage/Vandalism of Property": 1,
     "Trespass of Real Property": 1,
     "Disorderly Conduct": 1,
+    "Driving Under the Influence": 2,
+    "Liquor Law Violations": 1,
+    "Family Offenses, Nonviolent": 2,
+    "Pornography/Obscene Material": 3,
+    "Curfew/Loitering/Vagrancy Violations": 1,
+    "Runaway": 1,
+    "Other": 1,
 }
 DEFAULT_WEIGHT = 1
