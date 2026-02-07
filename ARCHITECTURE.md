@@ -81,7 +81,43 @@ or features array is empty.
 | geometry.y | latitude | REAL |
 | geometry.x | longitude | REAL |
 
-**Section 2.4 — Timestamp Convention:**
+**Section 2.4 — Field Mappings (Calls for Service):**
+
+| ArcGIS Field | Database Column | Type |
+|-------------|----------------|------|
+| callid | call_id | TEXT UNIQUE |
+| calltype | call_type | TEXT |
+| priority | priority | TEXT |
+| disposition | disposition | TEXT |
+| fulladdr | address | TEXT |
+| beat | beat | TEXT |
+| district | district | TEXT |
+| calldate | call_date | TEXT (ISO 8601, converted from ms timestamp) |
+| geometry.y | latitude | REAL |
+| geometry.x | longitude | REAL |
+
+**Section 2.5 — Field Mappings (ShotSpotter):**
+
+| ArcGIS Field | Database Column | Type |
+|-------------|----------------|------|
+| ShotSpotter_ID | incident_id | TEXT UNIQUE |
+| Rounds | rounds_fired | INTEGER |
+| Type | event_type | TEXT |
+| Address | address | TEXT |
+| Beat | beat | TEXT |
+| District | district | TEXT |
+| Date | event_date | TEXT (ISO 8601, converted from ms timestamp) |
+| geometry.y | latitude | REAL |
+| geometry.x | longitude | REAL |
+
+**Section 2.6 — Field Mappings (Boundaries):**
+
+| ArcGIS Field | Database Column | Type |
+|-------------|----------------|------|
+| beat / district | name | TEXT |
+| geometry (rings) | geometry_geojson | TEXT (JSON) |
+
+**Section 2.7 — Timestamp Convention:**
 
 ArcGIS returns dates as Unix milliseconds (e.g., `1687848000000`).
 Convert to ISO 8601 UTC strings for storage: `datetime.fromtimestamp(ms/1000, tz=timezone.utc).isoformat()`
@@ -202,7 +238,7 @@ ArcGIS REST APIs ──fetch_all_records()──> sync_crimes/calls/shot/boundar
 |----------------------|--------|
 | Homicide Offenses | 10 |
 | Robbery | 7 |
-| Kidnapping/Abduction | 7 |
+| Kidnapping/Abduction Offenses | 7 |
 | Sex Offenses | 6 |
 | Assault Offenses | 5 |
 | Arson | 5 |
@@ -213,10 +249,18 @@ ArcGIS REST APIs ──fetch_all_records()──> sync_crimes/calls/shot/boundar
 | Drug/Narcotic Offenses | 2 |
 | Fraud Offenses | 2 |
 | Stolen Property Offenses | 2 |
-| Destruction/Damage/Vandalism | 1 |
+| Pornography/Obscene Material | 3 |
+| Counterfeiting/Forgery | 2 |
+| Driving Under the Influence | 2 |
+| Family Offenses, Nonviolent | 2 |
+| Destruction/Damage/Vandalism of Property | 1 |
 | Trespass of Real Property | 1 |
 | Disorderly Conduct | 1 |
-| All others | 1 (DEFAULT_WEIGHT) |
+| Liquor Law Violations | 1 |
+| Curfew/Loitering/Vagrancy Violations | 1 |
+| Runaway | 1 |
+| Other | 1 |
+| All unlisted | 1 (DEFAULT_WEIGHT) |
 
 **Section 5.2 — Score Formula:**
 
