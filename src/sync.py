@@ -165,24 +165,24 @@ def sync_shotspotter(db_path: Path) -> int:
             ) VALUES (?,?,?,?,?,?,?,?,?)""",
             (
                 _get_attr(
-                    attrs, "incidentid", "IncidentID", "INCIDENTID", "incident_id"
+                    attrs, "ShotSpotter_ID", "incidentid", "IncidentID",
+                    "INCIDENTID", "incident_id",
                 ),
                 _get_attr(
-                    attrs, "roundsfired", "RoundsFired", "ROUNDSFIRED", "rounds_fired"
+                    attrs, "Rounds", "roundsfired", "RoundsFired",
+                    "ROUNDSFIRED", "rounds_fired",
                 ),
                 _get_attr(
-                    attrs, "eventtype", "EventType", "EVENTTYPE", "event_type"
+                    attrs, "Type", "eventtype", "EventType",
+                    "EVENTTYPE", "event_type",
                 ),
-                _get_attr(attrs, "fulladdr", "FullAddr", "FULLADDR", "address"),
-                _get_attr(attrs, "beat", "Beat", "BEAT"),
-                _get_attr(attrs, "district", "District", "DISTRICT"),
+                _get_attr(attrs, "Address", "fulladdr", "FullAddr", "FULLADDR", "address"),
+                _get_attr(attrs, "Beat", "beat", "BEAT"),
+                _get_attr(attrs, "District", "district", "DISTRICT"),
                 _ts_to_iso(
                     _get_attr(
-                        attrs,
-                        "eventdate",
-                        "EventDate",
-                        "EVENTDATE",
-                        "event_date",
+                        attrs, "Date", "eventdate", "EventDate",
+                        "EVENTDATE", "event_date",
                     )
                 ),
                 geom.get("y") if geom else None,
@@ -211,7 +211,12 @@ def sync_boundaries(db_path: Path) -> int:
         for feat in features:
             attrs = feat.get("attributes", {})
             geom = feat.get("geometry", {})
-            name = _get_attr(attrs, "name", "Name", "NAME", "BEAT", "DISTRICT")
+            name = _get_attr(
+                attrs, "beat", "district", "name", "Name", "NAME",
+                "BEAT", "DISTRICT", "AREA",
+            )
+            if name is None:
+                name = str(attrs.get("OBJECTID", "unknown"))
             geometry_geojson = json.dumps(geom) if geom else None
             conn.execute(
                 """INSERT OR REPLACE INTO boundaries (
