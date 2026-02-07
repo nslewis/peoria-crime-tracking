@@ -3,6 +3,11 @@
 > This document is the single source of truth for rebuilding this system.
 > Any AI agent or developer should be able to reconstruct the entire application
 > from this document alone, following its rules and specifications.
+>
+> **Portability:** This architecture is city-agnostic. To deploy for a different
+> city, only `config.py` (endpoints, weights, map center) and `sync.py`
+> (field mappings) need to change. See `cleveland-crime-tracking` for a
+> working example with a different ArcGIS data source.
 
 ## Article I: Purpose & Scope
 
