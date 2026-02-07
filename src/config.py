@@ -43,3 +43,24 @@ CRIME_WEIGHTS = {
     "Other": 1,
 }
 DEFAULT_WEIGHT = 1
+
+# Human-readable names for Peoria PD district numbers
+DISTRICT_NAMES = {
+    "1": "Downtown / Riverfront",
+    "2": "South Side / Warehouse District",
+    "3": "West Bluff / Bradley University",
+    "4": "South Side West / Bartonville",
+    "5": "East Bluff / Glen Oak",
+    "6": "Central Peoria / Knoxville",
+    "8": "South Side Central / Western Ave",
+    "10": "North Valley / Averyville",
+    "11": "Moss-Bradley / Upper West Bluff",
+    "12": "East Bluff North / Prospect Rd",
+    "13": "Sterling / Heading",
+    "14": "Richwoods / Northmoor",
+    "15": "North Peoria / Allen Rd",
+    "16": "Far North / Chillicothe",
+    "17": "Far Northeast / Peoria Heights",
+    "18": "University / Forrest Hill",
+    "19": "Far Northwest / Kickapoo",
+}

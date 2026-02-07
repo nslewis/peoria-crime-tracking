@@ -4,7 +4,7 @@ import pandas as pd
 from pathlib import Path
 from streamlit_folium import st_folium
 
-from src.config import DB_PATH
+from src.config import DB_PATH, DISTRICT_NAMES
 from src.database import init_db, get_connection
 from src.queries import (
     get_crime_counts_by_area,
@@ -51,16 +51,31 @@ def render(db_path: Path = DB_PATH):
         selected_year = st.selectbox("Year", ["All"] + [str(y) for y in years])
 
     districts = get_area_options(db_path, "district")
+    district_display = {d: DISTRICT_NAMES.get(d, d) for d in districts}
     with col2:
-        selected_district = st.selectbox("District", ["All"] + districts)
+        selected_district_label = st.selectbox(
+            "District",
+            ["All"] + [f"{district_display[d]}" for d in districts],
+        )
+    # Reverse-map the display label back to the district number
+    label_to_district = {v: k for k, v in district_display.items()}
+    selected_district = label_to_district.get(selected_district_label, selected_district_label)
 
     beats = get_area_options(db_path, "beat")
     with col3:
-        selected_beat = st.selectbox("Beat", ["All"] + beats)
+        if beats:
+            selected_beat = st.selectbox("Beat", ["All"] + beats)
+        else:
+            selected_beat = "All"
+            st.selectbox("Beat", ["All"], disabled=True)
 
     neighborhoods = get_area_options(db_path, "neighborhood")
     with col4:
-        selected_neighborhood = st.selectbox("Neighborhood", ["All"] + neighborhoods)
+        if neighborhoods:
+            selected_neighborhood = st.selectbox("Neighborhood", ["All"] + neighborhoods)
+        else:
+            selected_neighborhood = "All"
+            st.selectbox("Neighborhood", ["All"], disabled=True)
 
     # Build filter kwargs
     filters = {}

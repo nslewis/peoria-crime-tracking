@@ -3,7 +3,7 @@ import plotly.express as px
 import pandas as pd
 from pathlib import Path
 
-from src.config import DB_PATH
+from src.config import DB_PATH, DISTRICT_NAMES
 from src.database import get_connection
 from src.queries import get_crime_trend, get_area_options, compute_severity_score
 
@@ -93,16 +93,22 @@ def _render_area_comparison(db_path: Path):
 
     col1, col2 = st.columns(2)
     districts = get_area_options(db_path, "district")
+    district_display = {d: DISTRICT_NAMES.get(d, d) for d in districts}
+    display_list = [district_display[d] for d in districts]
+    label_to_district = {v: k for k, v in district_display.items()}
 
     if len(districts) < 2:
         st.info("Need at least 2 districts to compare.")
         return
 
     with col1:
-        area1 = st.selectbox("Area 1 (District)", districts, key="cmp1")
+        label1 = st.selectbox("Area 1", display_list, key="cmp1")
     with col2:
-        area2 = st.selectbox("Area 2 (District)", districts, key="cmp2",
-                              index=min(1, len(districts) - 1))
+        label2 = st.selectbox("Area 2", display_list, key="cmp2",
+                              index=min(1, len(display_list) - 1))
+
+    area1 = label_to_district[label1]
+    area2 = label_to_district[label2]
 
     trend1 = get_crime_trend(db_path, district=area1)
     trend2 = get_crime_trend(db_path, district=area2)
@@ -112,16 +118,16 @@ def _render_area_comparison(db_path: Path):
 
     if not df1.empty:
         df1["period"] = df1["year"].astype(str) + "-" + df1["month"].astype(str).str.zfill(2)
-        df1["area"] = f"District {area1}"
+        df1["area"] = label1
     if not df2.empty:
         df2["period"] = df2["year"].astype(str) + "-" + df2["month"].astype(str).str.zfill(2)
-        df2["area"] = f"District {area2}"
+        df2["area"] = label2
 
     combined = pd.concat([df1, df2], ignore_index=True)
     if not combined.empty:
         fig = px.line(
             combined, x="period", y="count", color="area",
-            title=f"District {area1} vs District {area2}", markers=True
+            title=f"{label1} vs {label2}", markers=True
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -130,9 +136,9 @@ def _render_area_comparison(db_path: Path):
     s2 = compute_severity_score(db_path, district=area2)
     mc1, mc2 = st.columns(2)
     with mc1:
-        st.metric(f"District {area1} Score", f"{s1:.0f}")
+        st.metric(f"{label1} Score", f"{s1:.0f}")
     with mc2:
-        st.metric(f"District {area2} Score", f"{s2:.0f}")
+        st.metric(f"{label2} Score", f"{s2:.0f}")
 
 
 def _render_time_patterns(db_path: Path):

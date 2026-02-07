@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 from streamlit_folium import st_folium
 
-from src.config import DB_PATH
+from src.config import DB_PATH, DISTRICT_NAMES
 from src.database import get_connection
 from src.map_utils import create_base_map, add_crime_markers
 from src.queries import get_area_options
@@ -35,7 +35,14 @@ def render(db_path: Path = DB_PATH):
             selected_type = st.selectbox("Crime Type", ["All"] + crime_types)
         with col2:
             districts = get_area_options(db_path, "district")
-            selected_district = st.selectbox("District", ["All"] + districts, key="explore_district")
+            district_display = {d: DISTRICT_NAMES.get(d, d) for d in districts}
+            selected_district_label = st.selectbox(
+                "District",
+                ["All"] + [district_display[d] for d in districts],
+                key="explore_district",
+            )
+            label_to_district = {v: k for k, v in district_display.items()}
+            selected_district = label_to_district.get(selected_district_label, selected_district_label)
 
         conditions = []
         params = []

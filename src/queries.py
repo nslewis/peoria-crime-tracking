@@ -125,9 +125,9 @@ def get_top_crime_types(db_path: Path, limit: int = 10, district: str | None = N
         conditions.append("neighborhood = ?")
         params.append(neighborhood)
 
+    conditions.append("nibrs_offense IS NOT NULL")
     query = "SELECT nibrs_offense, COUNT(*) as cnt FROM crimes"
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
+    query += " WHERE " + " AND ".join(conditions)
     query += " GROUP BY nibrs_offense ORDER BY cnt DESC LIMIT ?"
     params.append(limit)
 
@@ -147,7 +147,11 @@ def get_area_options(db_path: Path, area_type: str) -> list[str]:
 
 def get_yoy_change(db_path: Path, district: str | None = None,
                     beat: str | None = None, neighborhood: str | None = None) -> dict:
-    """Returns year-over-year crime count change between the two most recent years."""
+    """Returns year-over-year crime count change between the two most recent full years.
+
+    Skips the current calendar year if it has fewer than 12 months of data,
+    so that a partial year (e.g. Jan-Feb 2026) doesn't distort the comparison.
+    """
     conn = get_connection(db_path)
     conditions: list[str] = []
     params: list = []
@@ -162,19 +166,31 @@ def get_yoy_change(db_path: Path, district: str | None = None,
         params.append(neighborhood)
 
     where = " WHERE " + " AND ".join(conditions) if conditions else ""
+
+    # Get all years with their counts and month spans
     rows = conn.execute(
-        f"SELECT report_year, COUNT(*) FROM crimes{where} "
-        f"GROUP BY report_year ORDER BY report_year DESC LIMIT 2",
+        f"SELECT report_year, COUNT(*), COUNT(DISTINCT report_month) FROM crimes{where} "
+        f"GROUP BY report_year ORDER BY report_year DESC",
         params,
     ).fetchall()
     conn.close()
 
-    if len(rows) < 2:
-        return {"current_year": rows[0][0] if rows else None, "current": rows[0][1] if rows else 0,
+    # Filter to years with at least 10 months of data (substantially complete years)
+    full_years = [(r[0], r[1]) for r in rows if r[2] >= 10]
+
+    # If we don't have 2 full years, fall back to the two most recent years overall
+    if len(full_years) < 2:
+        candidates = [(r[0], r[1]) for r in rows]
+    else:
+        candidates = full_years
+
+    if len(candidates) < 2:
+        return {"current_year": candidates[0][0] if candidates else None,
+                "current": candidates[0][1] if candidates else 0,
                 "previous": 0, "change_pct": None}
 
-    current_year, current_count = rows[0]
-    prev_year, prev_count = rows[1]
+    current_year, current_count = candidates[0]
+    prev_year, prev_count = candidates[1]
     change_pct = ((current_count - prev_count) / prev_count * 100) if prev_count else None
     return {
         "current_year": current_year, "current": current_count,
