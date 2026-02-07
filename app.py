@@ -15,6 +15,7 @@ st.caption("Aggregating multiple data sources for a complete picture of crime in
 
 page = st.sidebar.radio("Navigate", [
     "Dashboard",
+    "Street Search",
     "Explore Data",
     "Trends & Comparison",
     "Data Sources & Sync",
@@ -22,6 +23,9 @@ page = st.sidebar.radio("Navigate", [
 
 if page == "Dashboard":
     from src.pages.dashboard import render
+    render()
+elif page == "Street Search":
+    from src.pages.street_search import render
     render()
 elif page == "Explore Data":
     from src.pages.explore import render

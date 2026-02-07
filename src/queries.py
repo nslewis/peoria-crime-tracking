@@ -143,3 +143,125 @@ def get_area_options(db_path: Path, area_type: str) -> list[str]:
     rows = conn.execute(query).fetchall()
     conn.close()
     return [str(row[0]) for row in rows]
+
+
+def get_yoy_change(db_path: Path, district: str | None = None,
+                    beat: str | None = None, neighborhood: str | None = None) -> dict:
+    """Returns year-over-year crime count change between the two most recent years."""
+    conn = get_connection(db_path)
+    conditions: list[str] = []
+    params: list = []
+    if district:
+        conditions.append("district = ?")
+        params.append(district)
+    if beat:
+        conditions.append("beat = ?")
+        params.append(beat)
+    if neighborhood:
+        conditions.append("neighborhood = ?")
+        params.append(neighborhood)
+
+    where = " WHERE " + " AND ".join(conditions) if conditions else ""
+    rows = conn.execute(
+        f"SELECT report_year, COUNT(*) FROM crimes{where} "
+        f"GROUP BY report_year ORDER BY report_year DESC LIMIT 2",
+        params,
+    ).fetchall()
+    conn.close()
+
+    if len(rows) < 2:
+        return {"current_year": rows[0][0] if rows else None, "current": rows[0][1] if rows else 0,
+                "previous": 0, "change_pct": None}
+
+    current_year, current_count = rows[0]
+    prev_year, prev_count = rows[1]
+    change_pct = ((current_count - prev_count) / prev_count * 100) if prev_count else None
+    return {
+        "current_year": current_year, "current": current_count,
+        "previous_year": prev_year, "previous": prev_count,
+        "change_pct": round(change_pct, 1) if change_pct is not None else None,
+    }
+
+
+def search_streets(db_path: Path, street_query: str, limit: int = 20) -> list[dict]:
+    """Search for streets matching a query and return crime summary per street."""
+    conn = get_connection(db_path)
+    rows = conn.execute("""
+        SELECT address, COUNT(*) as crime_count,
+               AVG(latitude) as avg_lat, AVG(longitude) as avg_lon,
+               GROUP_CONCAT(DISTINCT nibrs_offense) as crime_types,
+               MIN(report_date) as earliest, MAX(report_date) as latest
+        FROM crimes
+        WHERE address LIKE ?
+        GROUP BY address
+        ORDER BY crime_count DESC
+        LIMIT ?
+    """, (f"%{street_query.upper()}%", limit)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_street_crime_summary(db_path: Path, street_name: str) -> dict:
+    """Get detailed crime summary for a specific street."""
+    conn = get_connection(db_path)
+    total = conn.execute(
+        "SELECT COUNT(*) FROM crimes WHERE address LIKE ?",
+        (f"%{street_name.upper()}%",),
+    ).fetchone()[0]
+
+    by_type = conn.execute(
+        "SELECT nibrs_offense, COUNT(*) as cnt FROM crimes "
+        "WHERE address LIKE ? GROUP BY nibrs_offense ORDER BY cnt DESC",
+        (f"%{street_name.upper()}%",),
+    ).fetchall()
+
+    by_year = conn.execute(
+        "SELECT report_year, COUNT(*) as cnt FROM crimes "
+        "WHERE address LIKE ? GROUP BY report_year ORDER BY report_year",
+        (f"%{street_name.upper()}%",),
+    ).fetchall()
+
+    recent = conn.execute(
+        "SELECT * FROM crimes WHERE address LIKE ? ORDER BY report_date DESC LIMIT 20",
+        (f"%{street_name.upper()}%",),
+    ).fetchall()
+    conn.close()
+
+    score = sum(
+        CRIME_WEIGHTS.get(r[0], DEFAULT_WEIGHT) * r[1]
+        for r in by_type if r[0]
+    )
+
+    return {
+        "total": total,
+        "by_type": [{"type": r[0], "count": r[1]} for r in by_type],
+        "by_year": [{"year": r[0], "count": r[1]} for r in by_year],
+        "recent": [dict(r) for r in recent],
+        "severity_score": score,
+    }
+
+
+def get_recent_crimes(db_path: Path, limit: int = 50,
+                       district: str | None = None, beat: str | None = None,
+                       neighborhood: str | None = None) -> list[dict]:
+    """Returns the most recent crimes, optionally filtered by area."""
+    conn = get_connection(db_path)
+    conditions: list[str] = []
+    params: list = []
+    if district:
+        conditions.append("district = ?")
+        params.append(district)
+    if beat:
+        conditions.append("beat = ?")
+        params.append(beat)
+    if neighborhood:
+        conditions.append("neighborhood = ?")
+        params.append(neighborhood)
+
+    where = " WHERE " + " AND ".join(conditions) if conditions else ""
+    rows = conn.execute(
+        f"SELECT * FROM crimes{where} ORDER BY report_date DESC LIMIT ?",
+        params + [limit],
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]

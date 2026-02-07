@@ -12,6 +12,7 @@ from src.queries import (
     compute_severity_score,
     get_top_crime_types,
     get_area_options,
+    get_yoy_change,
 )
 from src.map_utils import create_base_map, add_crime_heatmap, add_crime_markers, add_boundary_overlay
 
@@ -83,8 +84,12 @@ def render(db_path: Path = DB_PATH):
 
     rating, color = _score_to_rating(area_score, city_avg)
 
+    # Year-over-year change
+    area_filters = {k: v for k, v in filters.items() if k != "year"}
+    yoy = get_yoy_change(db_path, **area_filters)
+
     # Score card + summary
-    metric_col1, metric_col2, metric_col3 = st.columns(3)
+    metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
 
     with metric_col1:
         st.markdown(
@@ -124,6 +129,18 @@ def render(db_path: Path = DB_PATH):
         st.metric("Total Crimes", f"{filtered_total:,}")
 
     with metric_col3:
+        if yoy["change_pct"] is not None:
+            delta_str = f"{yoy['change_pct']:+.1f}%"
+            st.metric(
+                f"vs {yoy.get('previous_year', 'prev')}",
+                f"{yoy['current']:,}",
+                delta=delta_str,
+                delta_color="inverse",
+            )
+        else:
+            st.metric("Year Trend", "N/A")
+
+    with metric_col4:
         if top_crimes:
             st.markdown("**Top Crime Types**")
             for tc in top_crimes[:3]:
