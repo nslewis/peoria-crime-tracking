@@ -44,6 +44,42 @@ CRIME_WEIGHTS = {
 }
 DEFAULT_WEIGHT = 1
 
+# Public fear ranking based on Gallup crime worry surveys.
+# Scale 1-10: higher = more public fear.  Maps NIBRS categories to the
+# crime types that survey respondents actually worry about.
+FEAR_INDEX = {
+    "Homicide Offenses": 10,            # "murdered" — 22% worry but highest dread
+    "Sex Offenses": 9,                  # "sexually assaulted" — 21%
+    "Kidnapping/Abduction Offenses": 9,
+    "Robbery": 8,                       # "mugged" — 29%
+    "Assault Offenses": 8,              # physical attack — 27%
+    "Burglary/Breaking & Entering": 7,  # "home burglarized" — 34%
+    "Motor Vehicle Theft": 7,           # "car stolen/broken into" — 39%
+    "Arson": 7,
+    "Weapon Law Violations": 6,
+    "Fraud Offenses": 5,                # "identity theft / scams" — 69/53% (high worry, low violence)
+    "Larceny/Theft Offenses": 4,
+    "Drug/Narcotic Offenses": 4,
+    "Stolen Property Offenses": 3,
+    "Counterfeiting/Forgery": 3,
+    "Driving Under the Influence": 3,
+    "Family Offenses, Nonviolent": 3,
+    "Pornography/Obscene Material": 3,
+    "Destruction/Damage/Vandalism of Property": 2,
+    "Trespass of Real Property": 2,
+    "Extortion/Blackmail": 4,
+    "Disorderly Conduct": 1,
+    "Liquor Law Violations": 1,
+    "Curfew/Loitering/Vagrancy Violations": 1,
+    "Runaway": 1,
+    "Gambling Offenses": 1,
+    "Prostitution Offenses": 1,
+    "Embezzlement": 2,
+    "Bad Checks": 1,
+    "Other": 2,
+}
+DEFAULT_FEAR = 2
+
 # Human-readable names for Peoria PD district numbers
 DISTRICT_NAMES = {
     "1": "Downtown / Riverfront",
